@@ -15,7 +15,8 @@ dist/
 checkpoint/
 
 # dataset
-datasets/vg/
+# data/raw
+# data/interim
 *.png
 
 # Editor temporaries
