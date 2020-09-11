@@ -1,0 +1,6 @@
+{
+    "name": "cats_on_sofa",
+    "train": ["./data/raw/images/1.jpg", "./data/raw/images/2.jpg", "./data/raw/images/3.jpg"],
+    "test": ["./data/raw/images/4.jpg", "./data/raw/images/5.jpg", "./data/raw/images/6.jpg"],
+    "other" : ["this", "is", "other", "info"]
+}

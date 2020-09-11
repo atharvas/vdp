@@ -1,0 +1,47 @@
+def run_sg(input_path, output_path, glove_path, model_path, log_path, sg_tools_rel_path="tools/relation_test_net.py", cuda_device_port=0, n_proc=1):
+    """
+    Inputs: 
+    input_path: str
+        The location of the directory with input images.
+        This folder must not contain anything other than the images.
+    output_path: str
+        The location of the output directory.
+        This folder must be empty.
+    glove_path: str
+        The location of the word embeddings.
+        If folder is empty, word embeddings will be downloaded to location
+    model_path: str
+        The locaitn of the trained scene graph generator.
+    log_path: str
+        The location where the log file should be written to.
+    sg_tools_rel_path: str
+        The location of the scene graph controller.
+    cuda_device_port: int
+        The port of the GPU
+    n_proc: int
+        Number of processes scene graph controller should spawn.
+    Notes:
+    """
+    cmd = f"""CUDA_VISIBLE_DEVICES={cuda_device_port}
+    python -m torch.distributed.launch --master_port 10027
+    --nproc_per_node={n_proc}
+    {sg_tools_rel_path}
+    --config-file "configs/e2e_relation_X_101_32_8_FPN_1x.yaml"
+    MODEL.ROI_RELATION_HEAD.USE_GT_BOX False
+    MODEL.ROI_RELATION_HEAD.USE_GT_OBJECT_LABEL False
+    MODEL.ROI_RELATION_HEAD.PREDICTOR CausalAnalysisPredictor
+    MODEL.ROI_RELATION_HEAD.CAUSAL.EFFECT_TYPE TDE 
+    MODEL.ROI_RELATION_HEAD.CAUSAL.FUSION_TYPE sum 
+    MODEL.ROI_RELATION_HEAD.CAUSAL.CONTEXT_LAYER motifs 
+    TEST.IMS_PER_BATCH 1 
+    DTYPE "float16" 
+    GLOVE_DIR {glove_path}
+    MODEL.PRETRAINED_DETECTOR_CKPT {model_path}
+    OUTPUT_DIR {model_path} 
+    TEST.CUSTUM_EVAL True
+    TEST.CUSTUM_PATH {input_path}
+    DETECTED_SGG_DIR {output_path}
+    > {log_path}
+    """.replace("\n", " ").replace("    ", "")
+    print(cmd)
+    os.system(cmd)
