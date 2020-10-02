@@ -1,0 +1,14 @@
+{
+    "name"  : "str", 
+    "train" : ["1.jpg", "2.jpg", "3.jpg"],
+    "test"  : ["4.jpg", "5.jpg", "6.jpg"],
+    "sg_config"  : {
+        "output_dir" : "./data/sg_processed",
+        "glove_path" : "./../../checkpoints/glove", 
+        "model_path" : "./../../checkpoints/pretrained/", 
+        "sg_tools_rel_path" : "./sg/tools/relation_test_net.py", 
+        "cuda_device_port" : "0,1", 
+        "n_proc" : "1"
+    }
+}
+

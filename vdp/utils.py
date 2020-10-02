@@ -2,11 +2,11 @@ import os
 import shutil
 import json
 
-os.chdir(os.path.abspath("./../")) # point this to the project directory 
+# os.chdir(os.path.abspath("./../")) # point this to the project directory 
 
 
 def conf(config_path):
-    with open("./config.json") as f:
+    with open(config_path) as f:
         return json.load(f)
     
 def make_set(params):
@@ -27,25 +27,30 @@ def make_set(params):
     normalized_name = params["name"].replace(" ", "_").lower()
     del params['name']
     folder_path = os.path.join("./data/interim/", normalized_name)
+    test_dir = (os.path.join(folder_path, "test"))
+    train_dir = (os.path.join(folder_path, "train"))
+    os.makedirs(test_dir, exist_ok=True)
+    os.makedirs(train_dir, exist_ok=True)
     #@TODO Logging
     for img_path in params['test']:
-        new_img_path = (os.path.join(folder_path, "test", os.path.basename(img_path)))
-        os.makedirs(new_img_path, exist_ok=True)
+        new_img_path = (os.path.join(test_dir, os.path.basename(img_path)))
         shutil.copy(img_path, new_img_path)
     del params['test']
 
     for img_path in params['train']:
-        new_img_path = (os.path.join(folder_path, "train", os.path.basename(img_path)))
-        os.makedirs(new_img_path, exist_ok=True)
+        new_img_path = (os.path.join(train_dir, os.path.basename(img_path)))
         shutil.copy(img_path, new_img_path)
+
     del params['train']
     
     if len(params):
         config_path = (os.path.join(folder_path, "config.json"))
         with open(config_path, 'w') as fp:
-            json.dump(params, fp)        
+            json.dump(params, fp)  
+    return normalized_name
     
-def run_sg(input_path, output_path, glove_path, model_path, log_path, sg_tools_rel_path="tools/relation_test_net.py", cuda_device_port=0, n_proc=1):
+
+def run_sg(input_path, output_path, glove_path, model_path, log_path, sg_tools_rel_path="tools/relation_test_net.py", sg_config_path="configs/e2e_relation_X_101_32_8_FPN_1x.yaml", cuda_device_port=0, n_proc=1, dry=True):
     """
     Inputs: 
     input_path: str
@@ -58,7 +63,7 @@ def run_sg(input_path, output_path, glove_path, model_path, log_path, sg_tools_r
         The location of the word embeddings.
         If folder is empty, word embeddings will be downloaded to location
     model_path: str
-        The locaitn of the trained scene graph generator.
+        The location of the trained scene graph generator.
     log_path: str
         The location where the log file should be written to.
     sg_tools_rel_path: str
@@ -73,7 +78,7 @@ def run_sg(input_path, output_path, glove_path, model_path, log_path, sg_tools_r
     python -m torch.distributed.launch --master_port 10027
     --nproc_per_node={n_proc}
     {sg_tools_rel_path}
-    --config-file "configs/e2e_relation_X_101_32_8_FPN_1x.yaml"
+    --config-file "{sg_config_path}"
     MODEL.ROI_RELATION_HEAD.USE_GT_BOX False
     MODEL.ROI_RELATION_HEAD.USE_GT_OBJECT_LABEL False
     MODEL.ROI_RELATION_HEAD.PREDICTOR CausalAnalysisPredictor
@@ -91,4 +96,23 @@ def run_sg(input_path, output_path, glove_path, model_path, log_path, sg_tools_r
     > {log_path}
     """.replace("\n", " ").replace("    ", "")
     print(cmd)
-    os.system(cmd)
+    if not dry:
+        os.system(cmd)
+
+def controller(file, dry=True):
+    vdp_params = conf(file)
+    sg_params = vdp_params['sg_config']
+    name = make_set(vdp_params)
+    sg_output_dir = sg_params['output_dir']
+    os.makedirs(sg_output_dir + f"/{name}", exist_ok=True)
+    run_sg(input_path=f"./data/interim/{name}/test",
+           output_path=f"{sg_output_dir}/{name}",
+           glove_path=sg_params['glove_path'],
+           model_path=sg_params["model_path"],
+           log_path=f"{sg_output_dir}/{name}/run.log",
+           sg_tools_rel_path=sg_params['sg_tools_rel_path'],
+           sg_config_path=sg_params['sg_config_path'],
+           cuda_device_port=sg_params['cuda_device_port'],
+           n_proc=sg_params['n_proc'],
+           dry=dry)
+    print("Done!")
