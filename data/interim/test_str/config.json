@@ -1,0 +1,1 @@
+{"sg_config": {"output_dir": "./data/sg_processed", "glove_path": "./../../checkpoints/glove", "model_path": "./../../checkpoints/pretrained_faster_rcnn", "sg_tools_rel_path": "./sg/tools/relation_test_net.py", "sg_config_path": "./sg/configs/e2e_relation_X_101_32_8_FPN_1x.yaml", "cuda_device_port": "0", "n_proc": "1"}}
