@@ -3,7 +3,13 @@ import shutil
 import json
 
 os.chdir(os.path.abspath("./../")) # point this to the project directory 
-def make_set(params, ):
+
+
+def conf(config_path):
+    with open("./config.json") as f:
+        return json.load(f)
+    
+def make_set(params):
     """
     Inputs: 
     vdp_params: dict
